@@ -7,13 +7,15 @@ setup(name="pirate",
       version="0.1",
       author='nunum',
       author_email='ntmg.22@gmail.com',
-      description='Search for oyur favourite movies',
+      url='https://github.com/NunuM/movies_command',
+      description='Search for your favourite movies',
       packages=find_packages(),
+      python_requires='~=3.4',
       package_data={
-        'pirate': ['*.cfg'],
+        'command': ['*.cfg'],
       },
       entry_points={
         'console_scripts': [
-            'pirate = pirate.pirate:main'
+            'pirate = command.pirate:main'
         ]
     })

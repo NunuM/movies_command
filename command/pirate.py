@@ -4,7 +4,7 @@ import sqlite3
 import json
 import datetime
 import logging
-import ConfigParser
+import configparser
 import getopt
 import sys
 import os.path
@@ -13,7 +13,7 @@ import requests
 
 
 def usage():
-    print """USAGE: pirate [OPTIONS]... [MOVIE]...
+    print("""USAGE: pirate [OPTIONS]... [MOVIE]...
     
     Search and download movies.
     
@@ -24,7 +24,7 @@ def usage():
     -r, --recent        check and persist new movies.
     -j, --json          print as json
     -h, --help          print this message and exits.
-    """
+    """)
 
     return True
 
@@ -304,9 +304,9 @@ def print_in_json(movies, is_brief=False, config=None):
 
     for movie in movies:
         if is_brief and len(valid_fields) > 0:
-            print json.dumps({k: movie[k] for k in set(valid_fields) & set(movie.keys())})
+            print(json.dumps({k: movie[k] for k in set(valid_fields) & set(movie.keys())}))
         else:
-            print json.dumps(movie)
+            print(json.dumps(movie))
 
     return True
 
@@ -325,14 +325,14 @@ def petty_print(movies, is_brief=False, config=None):
         valid_fields = config.get('pirate', 'brief_fields').split(',')
 
     for movie in movies:
-        print '-' * 100
+        print('-' * 100)
         for key in sorted(movie):
             if is_brief and len(valid_fields) > 0 and key not in valid_fields:
                 continue
-            print "{0:15}| {1:<25} ".format(unicode(key[0].upper() + key[1:]).encode('utf-8'),
-                                            unicode(movie[key]).encode('utf-8'))
-        print '-' * 100
-    print ""
+            print("{0:15}| {1:<25} ".format(str(key[0].upper() + key[1:]).encode('utf-8'),
+                                            str(movie[key]).encode('utf-8')))
+        print('-' * 100)
+    print("")
     return True
 
 
@@ -341,7 +341,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hjbric:g:",
                                    ["brief", "genre", "interactive", "json", "help", "recent", "config="])
     except getopt.GetoptError as err:
-        print str(err)
+        print(str(err))
         sys.exit(0)
 
     is_check_recent = False
@@ -368,26 +368,26 @@ def main():
             if os.path.exists(a):
                 config_filename = a
             else:
-                print "Configuration file {} not found, using the default".format(a)
+                print("Configuration file {} not found, using the default".format(a))
         elif o in ("-g", "--genre"):
             is_genre = True
             genre = a
         else:
-            print "Option {} is unknown".format(o)
+            print("Option {} is unknown".format(o))
 
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
 
     try:
         config.read(config_filename)
-    except ConfigParser.ParsingError as e:
+    except configparser.ParsingError as e:
         error_string = "Could not parse config file {}".format(config_filename)
-        print error_string + str(e)
+        print(error_string + str(e))
         sys.exit(1)
 
     try:
         logging.config.fileConfig(config_filename)
     except Exception as e:
-        print str(e)
+        print(str(e))
 
     db_connection = init_database(config)
 
@@ -400,14 +400,14 @@ def main():
                 else:
                     petty_print(inserted, is_brief, config)
             elif is_json is False:
-                print "No new movies were found"
+                print("No new movies were found")
         except Exception as e:
-            print str(e)
+            print(str(e))
     elif is_interactive:
         search_token = ""
 
         while search_token.lower() != "q":
-            search_token = raw_input("title:")
+            search_token = input("title:")
             if search_token.lower() != "q":
                 matched_movies = search_movies_by_tittle(db_connection, search_token)
                 petty_print(matched_movies, is_brief, config)
@@ -421,10 +421,10 @@ def main():
             print_in_json(matched_movies, is_brief, config)
         else:
             for movie in matched_movies:
-                print "Results for the genre: {}".format(genre)
+                print("Results for the genre: {}".format(genre))
                 petty_print([movie], is_brief, config)
                 current += 1
-                char = raw_input("{} in total of {}. Press enter to continue or q to exit.".format(current, num_movies))
+                char = input("{} in total of {}. Press enter to continue or q to exit.".format(current, num_movies))
                 if char == "q":
                     break
                 os.system('cls' if os.name == 'nt' else 'clear')
@@ -434,7 +434,7 @@ def main():
             if is_json:
                 print_in_json(matched_movies, is_brief, config)
             else:
-                print "Results for query: {}".format(search)
+                print("Results for query: {}".format(search))
                 petty_print(matched_movies, is_brief, config)
 
 
