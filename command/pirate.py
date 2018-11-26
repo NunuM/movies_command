@@ -350,7 +350,7 @@ def main():
     is_genre = False
     is_brief = False
     genre = None
-    config_filename = "/usr/share/pirate/config.cfg"
+    config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.cfg")
 
     for o, a in opts:
         if o in ("-h", "--help"):

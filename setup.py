@@ -14,6 +14,9 @@ setup(name="pirate",
       package_data={
         'command': ['*.cfg'],
       },
+      install_requires=[
+          'xml.etree', 'ConfigParser', 'requests', 'json', 'sqlite3'
+      ],
       entry_points={
         'console_scripts': [
             'pirate = command.pirate:main'
