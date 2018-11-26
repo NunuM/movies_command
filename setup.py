@@ -15,7 +15,7 @@ setup(name="pirate",
         'command': ['*.cfg'],
       },
       install_requires=[
-          'ConfigParser', 'requests', 'json', 'sqlite3'
+          'ConfigParser', 'requests'
       ],
       entry_points={
         'console_scripts': [
