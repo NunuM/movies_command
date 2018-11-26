@@ -1,0 +1,24 @@
+name: pirate # app name'
+version: '0.5' # git tag version'
+summary: Search for your favourite movies # 79 char long summary
+description: |
+  This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  pirate-part:
+    # See 'snapcraft plugins'
+    plugin: python
+    source: https://github.com/NunuM/movies_command.git
+    source-tag: v0.5
+
+apps:
+  pirate:
+    command: pirate
+    plugs: 
+      - home

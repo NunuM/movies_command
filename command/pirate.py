@@ -36,9 +36,17 @@ def init_database(config):
     :return: sqlite connection
     """
     db_name = config.get('sqlite', 'name')
-    db_path = config.get('sqlite', 'abs_path')
+    db_path = config.get('sqlite', 'rel_path')
+
+    user_dir = os.path.expanduser('~')
+    db_path = os.path.join(user_dir)
+
+    if not os.path.exists(db_path):
+        os.makedirs(db_path)
 
     db_filename = os.path.join(db_path, db_name)
+
+    logging.getLogger('pirate').info("Opening {} database".format(db_filename))
 
     conn = sqlite3.connect(db_filename)
 
@@ -329,8 +337,8 @@ def petty_print(movies, is_brief=False, config=None):
         for key in sorted(movie):
             if is_brief and len(valid_fields) > 0 and key not in valid_fields:
                 continue
-            print("{0:15}| {1:<25} ".format(str(key[0].upper() + key[1:]).encode('utf-8'),
-                                            str(movie[key]).encode('utf-8')))
+            print ("{0:15}| {1:<25} ".format((key[0].upper() + key[1:]),
+                                            (movie[key])))
         print('-' * 100)
     print("")
     return True
@@ -387,10 +395,13 @@ def main():
     try:
         logging.config.fileConfig(config_filename)
     except Exception as e:
+        print(str(e.message))
+
+    try:
+        db_connection = init_database(config)
+    except Exception as e:
         print(str(e))
-
-    db_connection = init_database(config)
-
+        sys.exit(1)
     if is_check_recent:
         try:
             inserted = download_recent(db_connection, config)
@@ -440,3 +451,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
