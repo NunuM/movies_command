@@ -38,20 +38,13 @@ def init_database(config):
     :return: sqlite connection
     """
     db_name = config.get('sqlite', 'name')
-    db_path = config.get('sqlite', 'rel_path')
 
     user_dir = os.environ['SNAP_DATA']
-    db_path = os.path.join(user_dir)
+    db_path = os.path.join(user_dir, db_name)
 
-    if not os.path.exists(db_path):
-        os.makedirs(db_path)
-        os.mknod(os.path.join(db_path, db_name))
-
-    db_filename = os.path.join(db_path, db_name)
-
-    logging.getLogger('pirate').info("Opening {} database".format(db_filename))
-
-    conn = sqlite3.connect(db_filename)
+    logging.getLogger('pirate').info("Opening {} database".format(db_path))
+    print(db_path)
+    conn = sqlite3.connect(db_path)
 
     conn.execute("""CREATE TABLE IF NOT EXISTS movies 
                         ( title         TEXT PRIMARY KEY,
@@ -276,23 +269,30 @@ def download_recent(db_connection, configs):
     inserted_movies = []
     movies_to_insert = []
 
-    feed = make_http_get_request(configs.get('piratebay', 'feed_url'))
+    try:
+        feed = make_http_get_request(configs.get('piratebay', 'feed_url'))
+    except ValueError as e:
+        print("Cannot continue due TBP feed failure, reason:" + str(e))
+        sys.exit(1)
 
     movies = parse_tpb_xml_feed(feed)
 
     for movie in movies:
         movie_title = movie[0]
+        json_meta = {'Quality': movie[2], 'magnet': movie[1], 'Title': movie[0]}
+
         if does_movie_exists(db_connection, movie_title) is False:
-            str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
-            json_meta = json.loads(str_meta, 'utf-8')
+            try:
+                str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
+                meta = json.loads(str_meta, 'utf-8')
+                json_meta.update(meta)
+            except Exception as e:
+                print(str(e))
+
             db_row = prepare_movie_db_tuple(movie, json_meta)
             movies_to_insert.append(db_row)
-
-            json_meta['Quality'] = movie[2]
-            json_meta['magnet'] = movie[1]
-            json_meta['Title'] = movie[0]
-
             inserted_movies.append(json_meta)
+            break
 
     if len(movies_to_insert) != 0:
         insert_into_database(db_connection, movies_to_insert, False)
