@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import xml.etree.ElementTree as ET
 import re
 import sqlite3
@@ -163,13 +165,13 @@ def insert_into_database(conn, movies, in_batch=True):
         try:
             conn.executemany(query, movies)
         except Exception as e:
-            logging.getLogger('pirate').error("Error on batch movies saving", movies, e)
+            logging.getLogger('pirate').error("Error on batch movies saving", str(e))
     else:
         for movie in movies:
             try:
                 conn.execute(query, movie)
             except Exception as e:
-                logging.getLogger('pirate').error("Error on saving movie", movie, e)
+                logging.getLogger('pirate').error("Error on saving movie", movie.get('Title') , str(e))
 
     conn.commit()
 
@@ -281,7 +283,7 @@ def download_recent(db_connection, configs):
         movie_title = movie[0]
         if does_movie_exists(db_connection, movie_title) is False:
             str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
-            json_meta = json.loads(str_meta)
+            json_meta = json.loads(str_meta, 'utf-8')
             db_row = prepare_movie_db_tuple(movie, json_meta)
             movies_to_insert.append(db_row)
 
@@ -337,8 +339,7 @@ def petty_print(movies, is_brief=False, config=None):
         for key in sorted(movie):
             if is_brief and len(valid_fields) > 0 and key not in valid_fields:
                 continue
-            print ("{0:15}| {1:<25} ".format((key[0].upper() + key[1:]),
-                                            (movie[key])))
+            print ("{0:15}| {1:<25}".format((key[0].upper() + key[1:]), str(movie[key]).encode('ascii','replace')))
         print('-' * 100)
     print("")
     return True
@@ -448,6 +449,7 @@ def main():
                 print("Results for query: {}".format(search))
                 petty_print(matched_movies, is_brief, config)
 
+    db_connection.close()
 
 if __name__ == '__main__':
     main()
