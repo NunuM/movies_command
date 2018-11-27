@@ -24,8 +24,3 @@ apps:
     command: blockbuster
     plugs: 
       - home
-
-
-hooks:
-  configure:
-    plugs: [home]
