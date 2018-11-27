@@ -339,7 +339,7 @@ def petty_print(movies, is_brief=False, config=None):
         for key in sorted(movie):
             if is_brief and len(valid_fields) > 0 and key not in valid_fields:
                 continue
-            print ("{0:15}| {1:<25}".format((key[0].upper() + key[1:]), str(movie[key]).encode('ascii','replace')))
+            print ("{0:15}| {1:<25}".format((key[0].upper() + key[1:]), str(movie[key]).encode('ascii','replace').decode()))
         print('-' * 100)
     print("")
     return True
