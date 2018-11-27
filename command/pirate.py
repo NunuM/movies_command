@@ -45,7 +45,7 @@ def init_database(config):
 
     if not os.path.exists(db_path):
         os.makedirs(db_path)
-	os.mknod(os.path.join(db_path, db_name))
+        os.mknod(os.path.join(db_path, db_name))
 
     db_filename = os.path.join(db_path, db_name)
 
