@@ -43,7 +43,6 @@ def init_database(config):
     db_path = os.path.join(user_dir, db_name)
 
     logging.getLogger('pirate').info("Opening {} database".format(db_path))
-    print(db_path)
     conn = sqlite3.connect(db_path)
 
     conn.execute("""CREATE TABLE IF NOT EXISTS movies 
@@ -159,13 +158,13 @@ def insert_into_database(conn, movies, in_batch=True):
         try:
             conn.executemany(query, movies)
         except Exception as e:
-            logging.getLogger('pirate').error("Error on batch movies saving", str(e))
+            print(str(e))
     else:
         for movie in movies:
             try:
                 conn.execute(query, movie)
             except Exception as e:
-                logging.getLogger('pirate').error("Error on saving movie", movie.get('Title') , str(e))
+                print(str(e))
 
     conn.commit()
 
@@ -257,7 +256,7 @@ def prepare_movie_db_tuple(movie, metadata):
                     json_object.get('inserted'))
 
 
-def download_recent(db_connection, configs):
+def download_recent(db_connection, configs, is_verbose=False):
     """
     Download xml feed, askng to the db if each movie
     entry already exists into datase, if not,
@@ -280,7 +279,8 @@ def download_recent(db_connection, configs):
     for movie in movies:
         movie_title = movie[0]
         json_meta = {'Quality': movie[2], 'magnet': movie[1], 'Title': movie[0]}
-
+        if is_verbose:
+            print("check movie:" + movie_title)
         if does_movie_exists(db_connection, movie_title) is False:
             try:
                 str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
@@ -292,9 +292,9 @@ def download_recent(db_connection, configs):
             db_row = prepare_movie_db_tuple(movie, json_meta)
             movies_to_insert.append(db_row)
             inserted_movies.append(json_meta)
-            break
 
     if len(movies_to_insert) != 0:
+        print("Inserting " + str(len(movies_to_insert)) + " new movies")
         insert_into_database(db_connection, movies_to_insert, False)
 
     return inserted_movies
@@ -343,6 +343,30 @@ def petty_print(movies, is_brief=False, config=None):
             print ("{0:15}| {1:<25}".format((key[0].upper() + key[1:]), str(movie[key]).encode('ascii','replace').decode()))
         print('-' * 100)
     print("")
+    return True
+
+
+def paginate(movies, query, is_brief=False, config=None):
+    """
+    Paginate movies
+    :param movies: list 
+    :param query: string
+    :param is_brief: boolean
+    :param config: 
+    :return: True
+    """
+    current = 0
+    num_movies = len(movies)
+
+    for movie in movies:
+        print("Results for the genre: {}".format(query))
+        petty_print([movie], is_brief, config)
+        current += 1
+        char = input("{} in total of {}. Press enter to continue or q to exit.".format(current, num_movies))
+        if char == "q":
+            break
+        os.system('cls' if os.name == 'nt' else 'clear')
+
     return True
 
 
@@ -406,14 +430,14 @@ def main():
         sys.exit(1)
     if is_check_recent:
         try:
-            inserted = download_recent(db_connection, config)
+            inserted = download_recent(db_connection, config, not is_json)
             if len(inserted) > 0:
                 if is_json:
                     print_in_json(inserted, is_brief, config)
                 else:
-                    petty_print(inserted, is_brief, config)
+                    paginate(inserted, "Recent", is_brief, config)
             elif is_json is False:
-                print("No new movies were found")
+                print("No movies were added")
         except Exception as e:
             print(str(e))
     elif is_interactive:
@@ -433,22 +457,14 @@ def main():
         if is_json:
             print_in_json(matched_movies, is_brief, config)
         else:
-            for movie in matched_movies:
-                print("Results for the genre: {}".format(genre))
-                petty_print([movie], is_brief, config)
-                current += 1
-                char = input("{} in total of {}. Press enter to continue or q to exit.".format(current, num_movies))
-                if char == "q":
-                    break
-                os.system('cls' if os.name == 'nt' else 'clear')
+            paginate(matched_movies, genre, is_brief, config)
     else:
         for search in args:
             matched_movies = search_movies_by_tittle(db_connection, search)
             if is_json:
                 print_in_json(matched_movies, is_brief, config)
             else:
-                print("Results for query: {}".format(search))
-                petty_print(matched_movies, is_brief, config)
+                paginate(matched_movies, search, is_brief, config)
 
     db_connection.close()
 

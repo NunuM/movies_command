@@ -1,5 +1,5 @@
 name: blockbuster # app name'
-version: '0.1' # git tag version'
+version: '0.2' # git tag version'
 summary: Search for your favourite movies # 79 char long summary
 description: |
   Update your movie database:-
@@ -17,7 +17,7 @@ parts:
     # See 'snapcraft plugins'
     plugin: python
     source: https://github.com/NunuM/movies_command.git
-    source-tag: v0.1
+    source-tag: v0.2
 
 apps:
   blockbuster:
