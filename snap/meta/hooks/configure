@@ -1,0 +1,11 @@
+#!/bin/sh -e
+
+omdbapi="$(snapctl get omdbapi)"
+
+if [ -z "$omdbapi" ]; then
+    echo "omdbapi api key is required!"
+    exit 1
+fi
+
+mkdir -m 0600 $SNAP_DATA/options
+echo "$omdbapi" > $SNAP_DATA/options/credentials

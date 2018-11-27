@@ -40,11 +40,12 @@ def init_database(config):
     db_name = config.get('sqlite', 'name')
     db_path = config.get('sqlite', 'rel_path')
 
-    user_dir = os.path.expanduser('~')
+    user_dir = os.environ['SNAP_DATA']
     db_path = os.path.join(user_dir)
 
     if not os.path.exists(db_path):
         os.makedirs(db_path)
+	os.mknod(os.path.join(db_path, db_name))
 
     db_filename = os.path.join(db_path, db_name)
 

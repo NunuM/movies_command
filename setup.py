@@ -3,7 +3,7 @@
 
 from setuptools import setup,find_packages
 
-setup(name="pirate",
+setup(name="blockbuster",
       version="0.1",
       author='nunum',
       author_email='ntmg.22@gmail.com',
@@ -19,6 +19,6 @@ setup(name="pirate",
       ],
       entry_points={
         'console_scripts': [
-            'pirate = command.pirate:main'
+            'blockbuster = command.pirate:main'
         ]
     })

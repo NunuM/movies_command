@@ -19,6 +19,11 @@ parts:
 
 apps:
   pirate:
-    command: pirate
+    command: blockbuster
     plugs: 
       - home
+
+
+hooks:
+  configure:
+    plugs: [home]
