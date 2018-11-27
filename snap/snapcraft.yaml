@@ -1,5 +1,5 @@
 name: blockbuster # app name'
-version: '0.6' # git tag version'
+version: '0.1' # git tag version'
 summary: Search for your favourite movies # 79 char long summary
 description: |
   Update your movie database:-
@@ -13,14 +13,14 @@ grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
 
 parts:
-  pirate-part:
+  blockbuster-part:
     # See 'snapcraft plugins'
     plugin: python
     source: https://github.com/NunuM/movies_command.git
-    source-tag: v0.6
+    source-tag: v0.1
 
 apps:
-  pirate:
+  blockbuster:
     command: blockbuster
     plugs: 
       - home
