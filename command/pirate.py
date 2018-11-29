@@ -117,14 +117,16 @@ def does_movie_exists(conn, movie_title):
     return conn.execute(query).fetchone()[0] > 0
 
 
-def insert_into_database(conn, movies, in_batch=True):
+def insert_into_database(conn, movies, in_batch=True, is_verbose=False):
     """
     Insert into database a given list of movies
     :param conn: database connection
     :param movies: list of tuples
     :param in_batch: boolean
+    :param is_verbose: boolean
     :return: boolean
     """
+    result = True
     query = """INSERT INTO movies(title,
                                   quality,
                                   originaltitle,
@@ -158,17 +160,23 @@ def insert_into_database(conn, movies, in_batch=True):
         try:
             conn.executemany(query, movies)
         except Exception as e:
-            print(str(e))
+            result = False
+            if is_verbose:
+                print(str(e))
+
     else:
         for movie in movies:
             try:
                 conn.execute(query, movie)
             except Exception as e:
-                print("Movie {} was not inserted, reason:{}".format(movie[0] if len(movie) > 0 else "Unknown", str(e)))
-
+                result = False
+                if is_verbose:
+                    print("Movie {} was not inserted, reason:{}".format(movie[0] if len(movie) > 0 else "Unknown",
+                                                                        str(e)))
+                    
     conn.commit()
 
-    return True
+    return result
 
 
 def make_http_get_request(url):
@@ -258,11 +266,12 @@ def prepare_movie_db_tuple(movie, metadata):
 
 def download_recent(db_connection, configs, is_verbose=False):
     """
-    Download xml feed, askng to the db if each movie
-    entry already exists into datase, if not,
+    Download xml feed, asking to the db if each movie
+    entry already exists into database, if not,
     insert it.
     :param db_connection: database connection
-    :param configs:
+    :param configs: configurationParser
+    :param is_verbose: boolean
     :return: json of inserted movies
     """
     inserted_movies = []
@@ -294,8 +303,10 @@ def download_recent(db_connection, configs, is_verbose=False):
             inserted_movies.append(json_meta)
 
     if len(movies_to_insert) != 0:
-        print("Inserting " + str(len(movies_to_insert)) + " new movies")
-        insert_into_database(db_connection, movies_to_insert, False)
+        if is_verbose:
+            print("Inserting " + str(len(movies_to_insert)) + " new movies")
+
+        insert_into_database(db_connection, movies_to_insert, False, is_verbose)
 
     return inserted_movies
 
@@ -340,7 +351,8 @@ def petty_print(movies, is_brief=False, config=None):
         for key in sorted(movie):
             if is_brief and len(valid_fields) > 0 and key not in valid_fields:
                 continue
-            print ("{0:15}| {1:<25}".format((key[0].upper() + key[1:]), str(movie[key]).encode('ascii','replace').decode()))
+            print("{0:15}| {1:<25}".format((key[0].upper() + key[1:]),
+                                           str(movie[key]).encode('ascii', 'replace').decode()))
         print('-' * 100)
     print("")
     return True
@@ -469,4 +481,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
