@@ -16,15 +16,15 @@ import requests
 
 def usage():
     print("""USAGE: pirate [OPTIONS]... [MOVIE]...
-    
+
     Search and download movies.
-    
-    -b, --brief         print movie with partial attributes 
-    -g, --genre         list all movies by genre 
-    -i, --interactive   search for films in interactive mode
+
+    -b, --brief         print movie with partial attributes.
+    -g, --genre         list all movies by genre.
+    -i, --interactive   search for films in interactive mode.
     -c, --config        use this config over the default.
     -r, --recent        check and persist new movies.
-    -j, --json          print as json
+    -j, --json          print as json.
     -h, --help          print this message and exits.
     """)
 
@@ -39,7 +39,7 @@ def init_database(config):
     """
     db_name = config.get('sqlite', 'name')
 
-    user_dir = os.environ['SNAP_DATA']
+    user_dir = config.get('sqlite', 'rel_path')
     db_path = os.path.join(user_dir, db_name)
 
     logging.getLogger('pirate').info("Opening {} database".format(db_path))
@@ -164,7 +164,7 @@ def insert_into_database(conn, movies, in_batch=True):
             try:
                 conn.execute(query, movie)
             except Exception as e:
-                print(str(e))
+                print("Movie {} was not inserted, reason:{}".format(movie[0] if len(movie) > 0 else "Unknown", str(e)))
 
     conn.commit()
 
@@ -284,7 +284,7 @@ def download_recent(db_connection, configs, is_verbose=False):
         if does_movie_exists(db_connection, movie_title) is False:
             try:
                 str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
-                meta = json.loads(str_meta, 'utf-8')
+                meta = json.loads(str_meta, encoding='utf-8')
                 json_meta.update(meta)
             except Exception as e:
                 print(str(e))
@@ -409,7 +409,7 @@ def main():
         else:
             print("Option {} is unknown".format(o))
 
-    config = configparser.SafeConfigParser()
+    config = configparser.ConfigParser(os.environ)
 
     try:
         config.read(config_filename)
@@ -452,8 +452,6 @@ def main():
                 break
     elif is_genre:
         matched_movies = search_movies_by_genre(db_connection, genre)
-        current = 0
-        num_movies = len(matched_movies)
         if is_json:
             print_in_json(matched_movies, is_brief, config)
         else:
@@ -467,6 +465,7 @@ def main():
                 paginate(matched_movies, search, is_brief, config)
 
     db_connection.close()
+
 
 if __name__ == '__main__':
     main()
