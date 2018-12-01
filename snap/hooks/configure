@@ -7,7 +7,7 @@ if [ -z "$omdbapi" ]; then
     exit 0
 fi
 
-paths=$(find / -type f -name pirate.py 2> /dev/null)
+paths=$(find $SNAP/lib -type f -name pirate.py 2> /dev/null)
 file=$(echo $paths | head -n 1)
 filename=$(readlink -f $file)
 directory=$(dirname $filename)
