@@ -186,7 +186,7 @@ def make_http_get_request(url):
     response = requests.get(url)
 
     if response.status_code is not 200:
-        raise ValueError("Must be a valid response from remote server")
+        raise ValueError(url + " not return OK response, status:" + response.status_code)
 
     return response.text
 
@@ -293,7 +293,8 @@ def download_recent(db_connection, configs, is_verbose=False):
                 meta = json.loads(str_meta, encoding='utf-8')
                 json_meta.update(meta)
             except Exception as e:
-                print(str(e))
+                if is_verbose:
+                    print("Cannot pull movie metadata, reason:" + str(e))
 
             db_row = prepare_movie_db_tuple(movie, json_meta)
             movies_to_insert.append(db_row)
@@ -435,6 +436,8 @@ def main():
     if is_check_recent:
         if not config.get('omdbapi', 'api_key') and not is_json:
             print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"")
+            if input("continue y/n?:") != 'y':
+                sys.exit(0)
         try:
             inserted = download_recent(db_connection, config, not is_json)
             if len(inserted) > 0:

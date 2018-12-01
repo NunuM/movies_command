@@ -3,8 +3,8 @@
 omdbapi="$(snapctl get omdbapi)"
 
 if [ -z "$omdbapi" ]; then
-    echo "omdbapi api key is required!"
-    exit 1
+    echo "If you want full movie metada, provide you api omdbapi key by tiping: snap set blockbuster omdbapi=\"my-key\" !"
+    exit 0
 fi
 
 paths=$(find / -type f -name pirate.py 2> /dev/null)
