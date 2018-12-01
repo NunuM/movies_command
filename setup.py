@@ -11,9 +11,6 @@ setup(name="blockbuster",
       description='Search for your favourite movies',
       packages=find_packages(),
       python_requires='~=3.4',
-      package_data={
-        'command': ['*.cfg'],
-      },
       install_requires=[
           'ConfigParser', 'requests'
       ],

@@ -19,6 +19,12 @@ parts:
     plugin: python
     source: https://github.com/NunuM/movies_command.git
     source-tag: v0.2
+  config-part:
+    plugin: dump
+    source: https://github.com/NunuM/movies_command.git
+    source-tag: v0.2
+    organize:
+      'config.cfg' : $SNAP_USER_COMMON/
 
 apps:
   blockbuster:
