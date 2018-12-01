@@ -29,6 +29,9 @@ def usage():
 
     return True
 
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    sys.exit(0)
 
 def init_database(config):
     """
@@ -186,7 +189,7 @@ def make_http_get_request(url):
     response = requests.get(url)
 
     if response.status_code is not 200:
-        raise ValueError(url + " not return OK response, status:" + response.status_code)
+        raise ValueError(url + " not return OK response, status code :" + str(response.status_code))
 
     return response.text
 
@@ -394,7 +397,7 @@ def main():
     is_genre = False
     is_brief = False
     genre = None
-    config_filename = os.path.join(os.path.dirname(os.path.realpath(os.environ['SNAP_USER_DATA'])), "config.cfg")
+    config_filename = os.path.join(os.environ['SNAP_DATA'], "config.cfg")
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -435,7 +438,7 @@ def main():
         sys.exit(1)
     if is_check_recent:
         if not config.get('omdbapi', 'api_key') and not is_json:
-            print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"")
+            print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"'")
             if input("continue y/n?:") != 'y':
                 sys.exit(0)
         try:

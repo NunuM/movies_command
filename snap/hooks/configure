@@ -3,8 +3,9 @@
 omdbapi="$(snapctl get omdbapi)"
 
 if [ -z "$omdbapi" ]; then
+    cp "$SNAP/etc/blockbuster/config.cfg" "$SNAP_DATA/"
     echo "If you want full movie metada, provide you api omdbapi key by tiping: snap set blockbuster omdbapi=\"my-key\" !"
     exit 0
 fi
 
-sed -i "s/api_key=.*/api_key=${omdbapi}/g" "$SNAP_USER_COMMON/config.cfg"
+sed -i "s/api_key=.*/api_key=${omdbapi}/g" "$SNAP_DATA/config.cfg"

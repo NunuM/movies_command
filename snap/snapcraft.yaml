@@ -10,21 +10,23 @@ description: |
     $ blockbuster -j "The movie"
 icon: icon.png
 
-grade: devel # must be 'stable' to release into candidate/stable channels
-confinement: devmode # use 'strict' once you have the right plugs and slots
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
 
 parts:
   blockbuster-part:
     # See 'snapcraft plugins'
     plugin: python
-    source: https://github.com/NunuM/movies_command.git
-    source-tag: v0.2
+    source: .
   config-part:
+    after: [blockbuster-part]
     plugin: dump
-    source: https://github.com/NunuM/movies_command.git
-    source-tag: v0.2
     organize:
-      'config.cfg' : $SNAP_USER_COMMON/
+      'config.cfg' : etc/blockbuster/config.cfg
+    stage:
+      - etc/blockbuster/config.cfg
+    prime:
+      - etc/blockbuster/config.cfg
 
 apps:
   blockbuster:
