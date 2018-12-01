@@ -1,21 +1,17 @@
-# -*- coding: utf-8 -*-
-
 import xml.etree.ElementTree as ET
 import re
 import sqlite3
 import json
 import datetime
-import logging
 import configparser
 import getopt
 import sys
 import os.path
-import logging.config
 import requests
 
 
 def usage():
-    print("""USAGE: pirate [OPTIONS]... [MOVIE]...
+    print("""USAGE: blockbuster [OPTIONS]... [MOVIE]...
 
     Search and download movies.
 
@@ -26,6 +22,9 @@ def usage():
     -r, --recent        check and persist new movies.
     -j, --json          print as json.
     -h, --help          print this message and exits.
+
+    Credits:
+    Aplication icon made by Freepik - http://www.freepik.com
     """)
 
     return True
@@ -42,7 +41,6 @@ def init_database(config):
     user_dir = config.get('sqlite', 'rel_path')
     db_path = os.path.join(user_dir, db_name)
 
-    logging.getLogger('pirate').info("Opening {} database".format(db_path))
     conn = sqlite3.connect(db_path)
 
     conn.execute("""CREATE TABLE IF NOT EXISTS movies 
@@ -188,7 +186,6 @@ def make_http_get_request(url):
     response = requests.get(url)
 
     if response.status_code is not 200:
-        logging.getLogger('pirate').error("Could not make GET request. status_code {}".format(response.status_code))
         raise ValueError("Must be a valid response from remote server")
 
     return response.text
@@ -431,16 +428,13 @@ def main():
         sys.exit(1)
 
     try:
-        logging.config.fileConfig(config_filename)
-    except Exception as e:
-        print(str(e.message))
-
-    try:
         db_connection = init_database(config)
     except Exception as e:
         print(str(e))
         sys.exit(1)
     if is_check_recent:
+        if not config.get('omdbapi', 'api_key') and not is_json:
+            print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"")
         try:
             inserted = download_recent(db_connection, config, not is_json)
             if len(inserted) > 0:

@@ -8,6 +8,7 @@ description: |
     $ blockbuster -g action
   Search by name and print as JSON
     $ blockbuster -j "The movie"
+icon: icon.png
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
@@ -24,3 +25,4 @@ apps:
     command: blockbuster
     plugs: 
       - home
+      - network

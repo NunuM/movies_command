@@ -7,5 +7,9 @@ if [ -z "$omdbapi" ]; then
     exit 1
 fi
 
-mkdir -m 0600 $SNAP_DATA/options
-echo "$omdbapi" > $SNAP_DATA/options/credentials
+paths=$(find / -type f -name pirate.py 2> /dev/null)
+file=$(echo $paths | head -n 1)
+filename=$(readlink -f $file)
+directory=$(dirname $filename)
+
+sed -i "s/api_key=.*/api_key=${omdbapi}/g" "${directory}/config.cfg"
