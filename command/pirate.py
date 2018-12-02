@@ -13,7 +13,7 @@ import requests
 def usage():
     print("""\033[1mUSAGE:\033[0m blockbuster [OPTIONS]... [MOVIE]...
 
-    Search and download movies. Start by populate your database by invoke 
+    Search and download information from movies. Start by populate your database by invoke 
     the program using only the option -r, then you can query the movies
     that you want. You must execute this action in regularly basis.
     
