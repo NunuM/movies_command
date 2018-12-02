@@ -1,5 +1,3 @@
-[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/blockbuster)
-
 <h1 align="center">
   <img src="https://raw.githubusercontent.com/NunuM/movies_command/master/icon.png" alt="[Project]">
   <br />
