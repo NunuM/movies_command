@@ -1,3 +1,5 @@
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/blockbuster)
+
 <h1 align="center">
   <img src="https://raw.githubusercontent.com/NunuM/movies_command/master/icon.png" alt="[Project]">
   <br />
@@ -19,7 +21,7 @@ distributions.</p>
 
 <p align="center">Published for <img src="https://raw.githubusercontent.com/anythingcodes/slack-emoji-for-techies/gh-pages/emoji/tux.png" align="top" width="24" /> with 💝 by Snapcrafters</p>
 
-
 ## Install
 
     sudo snap install blockbuster
+    
