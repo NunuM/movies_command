@@ -1,7 +1,7 @@
 <h1 align="center">
-  <img src="https://avatars1.githubusercontent.com/u/29598503?v=3&s=256" alt="[Project]">
+  <img src="https://raw.githubusercontent.com/NunuM/movies_command/master/icon.png" alt="[Project]">
   <br />
-  Blockbuster
+  <a href="https://snapcraft.io/blockbuster">Blockbuster</a>
 </h1>
 
 <p align="center"><b>This is the snap for blockbuster</b>, <i>“Search your favourite movies”</i>. It works on Ubuntu, Fedora, Debian, and other major Linux
