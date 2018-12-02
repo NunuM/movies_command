@@ -11,11 +11,24 @@ import requests
 
 
 def usage():
-    print("""USAGE: blockbuster [OPTIONS]... [MOVIE]...
+    print("""\033[1mUSAGE:\033[0m blockbuster [OPTIONS]... [MOVIE]...
 
-    Search and download movies.
+    Search and download movies. Start by populate your database by invoke 
+    the program using only the option -r, then you can query the movies
+    that you want. You must execute this action in regularly basis.
+    
+    You must set your omdbapi api key by typing:
+    $ snap set blockbuster omdbapi="you-api-key"
 
-    -b, --brief         print movie with partial attributes.
+    You can also change the feed source:
+    $ snap set blockbuster feed="https://rarbgproxied.org/rss?category=movies"
+
+    To see your snap configuration, you can query:
+    $ snap get blockbuster omdbapi
+
+\033[1mOPTIONS:\033[0m
+    -b, --brief         print movie with partial attributes, 
+		        this works along others options, such as: -j and/or -g.
     -g, --genre         list all movies by genre.
     -i, --interactive   search for films in interactive mode.
     -c, --config        use this config over the default.
@@ -23,15 +36,28 @@ def usage():
     -j, --json          print as json.
     -h, --help          print this message and exits.
 
-    Credits:
-    Aplication icon made by Freepik - http://www.freepik.com
+\033[1mEXAMPLES:\033[0m
+    Search all action movies and I only want see a brief summary.
+    $ blockbuster -b -g action
+
+    Search a movies by name and print as json.
+    $ blockbuster -b -j "The Movies"
+
+    Check if there is new movies, but I override current configuration 
+    by this configuration:
+    $ blockbuster -c /home/my.cfg -r
+
+\033[1mCREDITS:\033[0m
+    Application icon made by Freepik - http://www.freepik.com
+
+\033[1mPROJECT:\033[0m
+    GitHub - https://github.com/NunuM/movies_command
+
+    		Made with love by nunum
     """)
 
     return True
 
-def signal_handler(sig, frame):
-    print('You pressed Ctrl+C!')
-    sys.exit(0)
 
 def init_database(config):
     """
@@ -172,7 +198,7 @@ def insert_into_database(conn, movies, in_batch=True, is_verbose=False):
             except Exception as e:
                 result = False
                 if is_verbose:
-                    print("Movie {} was not inserted, reason:{}".format(movie[0] if len(movie) > 0 else "Unknown",
+                    print("Movie {} was not inserted, reason: {}".format(movie[0] if len(movie) > 0 else "Unknown",
                                                                         str(e)))
                     
     conn.commit()
@@ -207,13 +233,13 @@ def parse_tpb_xml_feed(feed):
     for items in root.findall(".//item"):
         original_title = items.find("title").text
         magnet = items.find("link").text
-        grouped = re.search(r'(.*)(\(?20[0-9][0-9][\)|\.]?)(.*)', original_title.replace('.', ' '))
-        if len(grouped.groups()) is 3:
+        grouped = re.search(r'(.*)(\(?[0-9]{4}[\)?|\.]? )(.*)', original_title.replace('.', ' '))
+        if grouped is not None and len(grouped.groups()) is 3:
             title = grouped.group(1).strip()
             quality = grouped.group(3).strip()
         else:
-            title = grouped.group(0)
-            quality = grouped.group(0)
+            title = original_title
+            quality = original_title
         container.append((title, quality, original_title, magnet))
 
     return container
@@ -287,7 +313,7 @@ def download_recent(db_connection, configs, is_verbose=False):
 
     for movie in movies:
         movie_title = movie[0]
-        json_meta = {'Quality': movie[2], 'magnet': movie[1], 'Title': movie[0]}
+        json_meta = {'Quality': movie[1], 'magnet': movie[3], 'Title': movie[0]}
         if is_verbose:
             print("check movie:" + movie_title)
         if does_movie_exists(db_connection, movie_title) is False:
@@ -372,7 +398,7 @@ def paginate(movies, query, is_brief=False, config=None):
     num_movies = len(movies)
 
     for movie in movies:
-        print("Results for the genre: {}".format(query))
+        print("Results for the query: {}".format(query))
         petty_print([movie], is_brief, config)
         current += 1
         char = input("{} in total of {}. Press enter to continue or q to exit.".format(current, num_movies))
@@ -385,98 +411,102 @@ def paginate(movies, query, is_brief=False, config=None):
 
 def main():
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hjbric:g:",
-                                   ["brief", "genre", "interactive", "json", "help", "recent", "config="])
-    except getopt.GetoptError as err:
-        print(str(err))
-        sys.exit(0)
-
-    is_check_recent = False
-    is_json = False
-    is_interactive = False
-    is_genre = False
-    is_brief = False
-    genre = None
-    config_filename = os.path.join(os.environ['SNAP_DATA'], "config.cfg")
-
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage()
-            sys.exit(0)
-        elif o in ("-r", "--recent"):
-            is_check_recent = True
-        elif o in ("-j", "--json"):
-            is_json = True
-        elif o in ("-b", "--brief"):
-            is_brief = True
-        elif o in ("-i", "--interactive"):
-            is_interactive = True
-        elif o in ("-c", "--config"):
-            if os.path.exists(a):
-                config_filename = a
-            else:
-                print("Configuration file {} not found, using the default".format(a))
-        elif o in ("-g", "--genre"):
-            is_genre = True
-            genre = a
-        else:
-            print("Option {} is unknown".format(o))
-
-    config = configparser.ConfigParser(os.environ)
-
-    try:
-        config.read(config_filename)
-    except configparser.ParsingError as e:
-        error_string = "Could not parse config file {}".format(config_filename)
-        print(error_string + str(e))
-        sys.exit(1)
-
-    try:
-        db_connection = init_database(config)
-    except Exception as e:
-        print(str(e))
-        sys.exit(1)
-    if is_check_recent:
-        if not config.get('omdbapi', 'api_key') and not is_json:
-            print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"'")
-            if input("continue y/n?:") != 'y':
-                sys.exit(0)
         try:
-            inserted = download_recent(db_connection, config, not is_json)
-            if len(inserted) > 0:
-                if is_json:
-                    print_in_json(inserted, is_brief, config)
-                else:
-                    paginate(inserted, "Recent", is_brief, config)
-            elif is_json is False:
-                print("No movies were added")
-        except Exception as e:
-            print(str(e))
-    elif is_interactive:
-        search_token = ""
+            opts, args = getopt.getopt(sys.argv[1:], "hjbric:g:",
+                                       ["brief", "genre", "interactive", "json", "help", "recent", "config="])
+        except getopt.GetoptError as err:
+            print(str(err))
+            sys.exit(0)
 
-        while search_token.lower() != "q":
-            search_token = input("title:")
-            if search_token.lower() != "q":
-                matched_movies = search_movies_by_tittle(db_connection, search_token)
-                petty_print(matched_movies, is_brief, config)
+        is_check_recent = False
+        is_json = False
+        is_interactive = False
+        is_genre = False
+        is_brief = False
+        genre = None
+        config_filename = os.path.join(os.environ['SNAP_DATA'], "config.cfg")
+
+        for o, a in opts:
+            if o in ("-h", "--help"):
+                usage()
+                sys.exit(0)
+            elif o in ("-r", "--recent"):
+                is_check_recent = True
+            elif o in ("-j", "--json"):
+                is_json = True
+            elif o in ("-b", "--brief"):
+                is_brief = True
+            elif o in ("-i", "--interactive"):
+                is_interactive = True
+            elif o in ("-c", "--config"):
+                if os.path.exists(a):
+                    config_filename = a
+                else:
+                    print("Configuration file {} not found, using the default".format(a))
+            elif o in ("-g", "--genre"):
+                is_genre = True
+                genre = a
             else:
-                break
-    elif is_genre:
-        matched_movies = search_movies_by_genre(db_connection, genre)
-        if is_json:
-            print_in_json(matched_movies, is_brief, config)
-        else:
-            paginate(matched_movies, genre, is_brief, config)
-    else:
-        for search in args:
-            matched_movies = search_movies_by_tittle(db_connection, search)
+                print("Option {} is unknown".format(o))
+
+        config = config = configparser.ConfigParser(os.environ)
+
+        try:
+            config.read(config_filename)
+        except ConfigParser.ParsingError as e:
+            error_string = "Could not parse config file {}".format(config_filename)
+            print(error_string + str(e))
+            sys.exit(1)
+
+        try:
+            db_connection = init_database(config)
+        except Exception as e:
+            print("Could not connect to database, reason:" + str(e))
+            sys.exit(1)
+
+        if is_check_recent:
+            if not config.get('omdbapi', 'api_key') and not is_json:
+                print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"'")
+                if input("continue y/n?:") != 'y':
+                    sys.exit(0)
+            try:
+                inserted = download_recent(db_connection, config, not is_json)
+                if len(inserted) > 0:
+                    if is_json:
+                        print_in_json(inserted, is_brief, config)
+                    else:
+                        paginate(inserted, "Recent", is_brief, config)
+                elif is_json is False:
+                    print("No movies were added")
+            except Exception as e:
+                print(str(e))
+        elif is_interactive:
+            search_token = ""
+
+            while search_token.lower() != "q":
+                search_token = input("title:")
+                if search_token.lower() != "q":
+                    matched_movies = search_movies_by_tittle(db_connection, search_token)
+                    petty_print(matched_movies, is_brief, config)
+                else:
+                    break
+        elif is_genre:
+            matched_movies = search_movies_by_genre(db_connection, genre)
             if is_json:
                 print_in_json(matched_movies, is_brief, config)
             else:
-                paginate(matched_movies, search, is_brief, config)
+                paginate(matched_movies, genre, is_brief, config)
+        else:
+            for search in args:
+                matched_movies = search_movies_by_tittle(db_connection, search)
+                if is_json:
+                    print_in_json(matched_movies, is_brief, config)
+                else:
+                    paginate(matched_movies, search, is_brief, config)
 
-    db_connection.close()
+        db_connection.close()
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 if __name__ == '__main__':
