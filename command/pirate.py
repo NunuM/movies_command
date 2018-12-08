@@ -1,34 +1,45 @@
+# -*- coding: utf-8 -*-
+
 import xml.etree.ElementTree as ET
 import re
 import sqlite3
 import json
 import datetime
+import requests
 import configparser
 import getopt
 import sys
 import os.path
-import requests
 
 
 def usage():
     print("""\033[1mUSAGE:\033[0m blockbuster [OPTIONS]... [MOVIE]...
 
-    Search and download information from movies. Start by populate your database by invoke 
-    the program using only the option -r, then you can query the movies
-    that you want. You must execute this action in regularly basis.
+    Query movies information by populating the local database from
+    XML feeds that you like. Invoke the program using only the option -r,
+    then you can query the movies that you want. You must execute
+    this action on regular basis.  
     
     You must set your omdbapi api key by typing:
     $ snap set blockbuster omdbapi="you-api-key"
 
-    You can also change the feed source:
-    $ snap set blockbuster feed="https://rarbgproxied.org/rss?category=movies"
+    You can also change the XML source feed since the source follows
+    the syntax of having an XML with title and link tags, repeated 
+    within of an item tag, eg:
+        ... 
+        <item>
+            <title></title>
+            <link></link>
+        </item>
+        ...
+    $ snap set blockbuster feed="https://mymoviessource.com/rss?category=movies"
 
     To see your snap configuration, you can query:
     $ snap get blockbuster omdbapi
 
 \033[1mOPTIONS:\033[0m
     -b, --brief         print movie with partial attributes, 
-		        this works along others options, such as: -j and/or -g.
+		                this works along others options, such as: -j and/or -g.
     -g, --genre         list all movies by genre.
     -i, --interactive   search for films in interactive mode.
     -c, --config        use this config over the default.
@@ -40,10 +51,10 @@ def usage():
     Search all action movies and I only want see a brief summary.
     $ blockbuster -b -g action
 
-    Search a movies by name and print as json.
+    Search movies by name and print as JSON.
     $ blockbuster -b -j "The Movies"
 
-    Check if there is new movies, but I override current configuration 
+    Check if there are new movies, but I override current configuration 
     by this configuration:
     $ blockbuster -c /home/my.cfg -r
 
@@ -199,8 +210,8 @@ def insert_into_database(conn, movies, in_batch=True, is_verbose=False):
                 result = False
                 if is_verbose:
                     print("Movie {} was not inserted, reason: {}".format(movie[0] if len(movie) > 0 else "Unknown",
-                                                                        str(e)))
-                    
+                                                                         str(e)))
+
     conn.commit()
 
     return result
@@ -232,6 +243,12 @@ def parse_tpb_xml_feed(feed):
 
     for items in root.findall(".//item"):
         original_title = items.find("title").text
+
+        if original_title is not None and len(original_title) > 0:
+            original_title = original_title.replace('\'', '´')
+        else:
+            continue
+
         magnet = items.find("link").text
         grouped = re.search(r'(.*)(\(?[0-9]{4}[\)?|\.]? )(.*)', original_title.replace('.', ' '))
         if grouped is not None and len(grouped.groups()) is 3:
@@ -304,7 +321,7 @@ def download_recent(db_connection, configs, is_verbose=False):
     movies_to_insert = []
 
     try:
-        feed = make_http_get_request(configs.get('piratebay', 'feed_url'))
+        feed = make_http_get_request(configs.get('rsssource', 'feed_url'))
     except ValueError as e:
         print("Cannot continue due TBP feed failure, reason:" + str(e))
         sys.exit(1)
@@ -315,7 +332,7 @@ def download_recent(db_connection, configs, is_verbose=False):
         movie_title = movie[0]
         json_meta = {'Quality': movie[1], 'magnet': movie[3], 'Title': movie[0]}
         if is_verbose:
-            print("check movie:" + movie_title)
+            print("check movie:" + movie_title.encode('ascii', 'replace').decode())
         if does_movie_exists(db_connection, movie_title) is False:
             try:
                 str_meta = make_http_get_request(configs.get('omdbapi', 'url').format(movie_title.replace(' ', '+')))
@@ -453,7 +470,7 @@ def main():
 
         try:
             config.read(config_filename)
-        except ConfigParser.ParsingError as e:
+        except configparser.ParsingError as e:
             error_string = "Could not parse config file {}".format(config_filename)
             print(error_string + str(e))
             sys.exit(1)
@@ -466,7 +483,8 @@ def main():
 
         if is_check_recent:
             if not config.get('omdbapi', 'api_key') and not is_json:
-                print("Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"'")
+                print(
+                    "Please provide you omdbapi key by typing in your shell:'snap set blockbuster omdbapi=\"you-api-key\"'")
                 if input("continue y/n?:") != 'y':
                     sys.exit(0)
             try:
@@ -487,7 +505,7 @@ def main():
                 search_token = input("title:")
                 if search_token.lower() != "q":
                     matched_movies = search_movies_by_tittle(db_connection, search_token)
-                    petty_print(matched_movies, is_brief, config)
+                    paginate(matched_movies, search_token , is_brief, config)
                 else:
                     break
         elif is_genre:

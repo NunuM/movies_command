@@ -12,7 +12,7 @@ setup(name="blockbuster",
       packages=find_packages(),
       python_requires='~=3.4',
       install_requires=[
-          'ConfigParser', 'requests'
+          'configparser', 'requests'
       ],
       entry_points={
         'console_scripts': [
